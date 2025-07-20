@@ -1,0 +1,22 @@
+# Python virtual environments
+.venv/
+env/
+venv/
+*.env
+.env*
+
+# Byte-code files
+*.pyc
+__pycache__/
+
+# IDE-specific files (e.g., VS Code, PyCharm)
+.vscode/
+.idea/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Output directories created by the project
+input/
+output/

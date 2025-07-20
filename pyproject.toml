@@ -1,0 +1,19 @@
+[project]
+name = "mcp-services"
+version = "0.1.0"
+description = "A MCP server to upload and convert PDF files to Markdown"
+requires-python = ">=3.10"
+dependencies = [
+    "pdfplumber>=0.11.4",
+    "langgraph>=0.2.14",
+    "ocrmypdf>=16.5.0",
+    "fastmcp>=2.0.0",
+    "uvicorn>=0.30.6",
+    "langchain-mcp-adapters>=0.1.0",
+    "anthropic>=0.34.2",
+    "httpx>=0.27.0",
+    "langchain-openai>=0.3.7",
+    "langchain-google-genai>=0.3.11",
+    "python-dotenv>=1.0.1",
+    "langgraph>=0.2.55",
+]
