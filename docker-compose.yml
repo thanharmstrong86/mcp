@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  mcp-upload-server:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - PYTHONPATH=/app/src
+      - DOCKER_ENV=1
+    volumes:
+      - ./uploaded:/app/uploaded
+      - ./processed_files.json:/app/processed_files.json
+
+  mcp-convert-server:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - PYTHONPATH=/app/src
+      - DOCKER_ENV=1
+    volumes:
+      - ./output:/app/output
+      - ./uploaded:/app/uploaded
+      - ./processed_files.json:/app/processed_files.json
+    command: ["python", "-m", "src.server.convert_mcp"]
