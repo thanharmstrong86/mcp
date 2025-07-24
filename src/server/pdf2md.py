@@ -8,12 +8,12 @@ from pathlib import Path
 
 # Define the project root (two levels up from src/server)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-INPUT_DIR = os.path.join(PROJECT_ROOT, "uploaded")
-OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
-TEMP_DIR = os.path.join(PROJECT_ROOT, "temp")
+UPLOAD_DIR = "/app/uploaded" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "uploaded")
+OUTPUT_DIR = "/app/output" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "output")
+TEMP_DIR = "/app/temp" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "temp")
 
 # Create directories if they don't exist
-os.makedirs(INPUT_DIR, exist_ok=True)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
 
@@ -172,6 +172,6 @@ def convert_pdf_to_markdown(pdf_path: str) -> dict:
 
 if __name__ == "__main__":
     # Example usage
-    pdf_file = os.path.join(INPUT_DIR, "input.pdf")
+    pdf_file = os.path.join(UPLOAD_DIR, "input.pdf")
     result = convert_pdf_to_markdown(pdf_file)
     print(result)

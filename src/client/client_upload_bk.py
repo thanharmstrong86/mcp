@@ -7,7 +7,6 @@ import logging
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.tools import tool 
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +36,6 @@ client = MultiServerMCPClient(
     }
 )
 
-@tool
 async def upload_file(file_path, delete_after=False):
     """Upload file content to the server via Starlette endpoint."""
     file_name = os.path.basename(file_path)
@@ -57,7 +55,6 @@ async def main():
     try:
         # Fetch available tools from the MCP server
         tools = await client.get_tools()
-        tools.append(upload_file)
         logger.info("Available Tools: %s", [tool.name for tool in tools])
         for tool in tools:
             logger.info("Tool Schema for %s: %s", tool.name, tool.__dict__)
@@ -70,30 +67,8 @@ async def main():
             raise FileNotFoundError(f"PDF file {INPUT_FILE} not found in {INPUT_DIR}")
 
         # Upload the file to the server
-        file_name = os.path.basename(INPUT_FILE)
-        print(f"Using input file: {INPUT_FILE}")
-
-        # Natural language input for the agent to use the custom upload_file_via_api tool
-        upload_input = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": (
-                        f"Please upload the file located at '{INPUT_FILE}' to the server "
-                        f"and do not delete it after upload."
-                    )
-                }
-            ]
-        }
-        print("Sending upload request via agent...")
-        upload_response = await agent.ainvoke(upload_input)
-        print("Upload Response:")
-        messages = upload_response.get("messages", [])
-        for msg in messages:
-            msg_type = getattr(msg, "type", getattr(msg, "role", "unknown"))
-            msg_content = getattr(msg, "content", "No content")
-            print(f"  Message Type: {msg_type}, Content: {msg_content[:200]}...") # Truncate content for display
-            print(f"  Message Attributes: {vars(msg)}")
+        file_name = await upload_file(INPUT_FILE, delete_after=False)
+        logger.info("Using input file: %s", file_name)
 
         # Natural language input for the file_status tool
         status_input = {
