@@ -64,3 +64,16 @@ You need to run the two MCP servers in separate terminal windows/tabs, and then 
 Navigate to your project root (`/path/to/your/MCP/`) and run:
 ```bash
 uv run python -m src.server.upload.mcp
+
+### 4. Docker
+
+2 services :
+- mcp-upload-server : port 8000
+- mcp-convert-server : port 8001
+
+docker-compose up --build -d
+
+### 5. Client
+
+uv run python -m src.client.client_upload
+uv run python -m src.client.client_convert
