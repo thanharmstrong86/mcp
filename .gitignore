@@ -20,4 +20,5 @@ Thumbs.db
 # Output directories created by the project
 input/
 output/
+uploaded/
 processed_files.json

@@ -2,7 +2,9 @@ from mcp.server.fastmcp import FastMCP
 import os
 import uvicorn
 import argparse
-from .pdf2md import convert_pdf_to_markdown, UPLOAD_DIR, OUTPUT_DIR
+from .pdf2md import convert_pdf_to_markdown, OUTPUT_DIR
+from fastapi.staticfiles import StaticFiles
+from urllib.parse import quote
 
 mcp = FastMCP("pdf2md_mcp_server", host="0.0.0.0", port=8001)
 
@@ -19,7 +21,13 @@ def convert_pdf_to_markdown_tool(pdf_path: str) -> dict:
     
     # Call convert_pdf_to_markdown from pdf2md.py
     result = convert_pdf_to_markdown(pdf_abs_path)
-    
+    if result["status"] == "success":
+        markdown_path = result["markdown_path"]
+        filename = os.path.basename(markdown_path)
+        host = os.getenv("PUBLIC_HOST", "localhost")  # Use "localhost" for external access
+        port = os.getenv("PORT", "8001")
+        public_url = f"http://{host}:{port}/output/{quote(filename)}"
+        result["download_url"] = public_url
     return result
 
 def main():
@@ -42,6 +50,8 @@ def main():
             app = mcp.streamable_http_app()
             if app is None:
                 raise AttributeError("streamable_http_app() returned None")
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            app.mount("/output", StaticFiles(directory=OUTPUT_DIR), name="output")
             print(f"✅ SUCCESS: Got streamable_http_app from FastMCP!")
             print(f"App type: {type(app)}")
             print(f"Running Uvicorn on {host}:{port}")
