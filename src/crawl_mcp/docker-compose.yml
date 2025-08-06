@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  crawl4ai-mcp-server:
+    build: .
+    ports:
+      - "8002:8002"
+    environment:
+      - PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
+      - PUBLIC_HOST=localhost
+      - PORT=8002
+    volumes:
+      - ./output:/app/output
+      - /dev/shm:/dev/shm
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
