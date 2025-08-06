@@ -1,0 +1,13 @@
+[project]
+name = "crawl_mcp"
+version = "0.1.0"
+description = "Crawl4AI demo project with MCP integration"
+requires-python = ">=3.10"
+dependencies = [
+    "crawl4ai==0.7.0",
+    "mcp>=0.1.43",
+    "uvicorn>=0.30.6"
+]
+
+[tool.uv]
+# No 'lock' field needed; uv manages uv.lock automatically
