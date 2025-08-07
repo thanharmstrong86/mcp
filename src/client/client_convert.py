@@ -50,7 +50,7 @@ async def upload_file(file_path, delete_after=False):
         with open(file_path, "rb") as f:
             files = {"file": (file_name, f, "application/pdf")}
             data = {"delete_after": str(delete_after).lower()}
-            response = requests.post("http://127.0.0.1:8000/mcp/upload_pdf_tool", files=files, data=data)
+            response = requests.post("http://127.0.0.1:8001/mcp/upload_pdf_tool", files=files, data=data)
             response.raise_for_status()
             server_response_data = response.json()
             logger.info(f"File {file_name} uploaded successfully to MCP upload server")
