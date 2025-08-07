@@ -6,7 +6,7 @@ import re
 import os
 from pathlib import Path
 
-# Define the project root (two levels up from src/server)
+# Define the project root (two levels up from src/convert_pdf/src)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 UPLOAD_DIR = "/app/uploaded" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "uploaded")
 OUTPUT_DIR = "/app/output" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "output")

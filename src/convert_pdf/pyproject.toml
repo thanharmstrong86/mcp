@@ -1,0 +1,27 @@
+[project]
+name = "convert_pdf"
+version = "0.1.0"
+description = "A modular MCP server to convert PDF files to Markdown"
+requires-python = ">=3.10"
+dependencies = [
+    "pdfplumber>=0.11.4",
+    "ocrmypdf>=16.5.0",
+    "uvicorn>=0.30.6",
+    "python-dotenv>=1.0.1",
+    "langgraph>=0.2.55",
+    "anyio>=4.0.0",
+    "httpcore>=1.0.0",
+    "mcp>=0.1.43",
+    "fastapi>=0.115.0",
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+mcp-converter = "src.convert_mcp:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

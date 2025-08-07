@@ -1,30 +1,24 @@
+from .pdf2md import convert_pdf_to_markdown, OUTPUT_DIR, UPLOAD_DIR, PROJECT_ROOT
+from urllib.parse import quote
 import os
-import json
-import argparse
 import uvicorn
-import logging
+import argparse
 from mcp.server.fastmcp import FastMCP
-from starlette.applications import Starlette
+from starlette.staticfiles import StaticFiles
+import logging
+import json
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Define paths
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-UPLOAD_DIR = "/app/uploaded" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "uploaded")
 PROCESSED_LIST = "/app/processed_files.json" if os.getenv("DOCKER_ENV") else os.path.join(PROJECT_ROOT, "processed_files.json")
 
-mcp = FastMCP("upload_mcp_server")
-app = mcp.streamable_http_app()  # Get Starlette app from FastMCP
+# Initialize FastMCP server
+mcp = FastMCP()
 
-# Create the upload directory and processed files list if they don't exist
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-if not os.path.exists(PROCESSED_LIST):
-    with open(PROCESSED_LIST, "w") as f:
-        json.dump([], f)
+app = mcp.streamable_http_app()
 
 # Use @mcp.tool() will cost tokens of llm model and inefficient. API for upload pdf file is more efficient.
 @app.route("/mcp/upload_pdf_tool", methods=["POST"])
@@ -79,33 +73,57 @@ async def upload_pdf_tool(request: Request) -> JSONResponse:
         return JSONResponse({"status": "error", "message": f"Failed to upload file: {str(e)}"}, status_code=500)
 
 @mcp.tool()
-def file_status(filename: str) -> dict:
-    """Checks the existence of an uploaded file."""
-    logger.info(f"file_status called with filename: {filename}")
-    exists = os.path.exists(os.path.join(UPLOAD_DIR, filename))
-    return {"exists": exists}
-
-@mcp.tool()
-def list_processed_files() -> list:
-    """Lists all files that have been processed and recorded."""
-    logger.info("list_processed_files called")
-    with open(PROCESSED_LIST, "r") as f:
-        return json.load(f)
+def convert_pdf_to_markdown_tool(pdf_path: str) -> dict:
+    """Convert a PDF file to Markdown format and save it to the specified output directory."""
+    logger.info(f"convert_pdf_to_markdown_tool called with pdf_path: {pdf_path}")
+    
+    # Resolve relative pdf_path to UPLOAD_DIR (uploaded)
+    pdf_abs_path = pdf_path
+    if not os.path.isabs(pdf_path):
+        logger.error("No file provided in upload")
+        return {"status": "error", "message": "No file provided"}
+    
+    # Call convert_pdf_to_markdown from pdf2md.py
+    result = convert_pdf_to_markdown(pdf_abs_path)
+    if result["status"] == "success":
+        markdown_path = result["markdown_path"]
+        filename = os.path.basename(markdown_path)
+        host = os.getenv("PUBLIC_HOST", "localhost")  # Use "localhost" for external access
+        port = os.getenv("PORT", "8001")
+        public_url = f"http://{host}:{port}/output/{quote(filename)}"
+        result["download_url"] = public_url
+    return result
 
 def main():
-    """Run the MCP PDF upload server."""
-    parser = argparse.ArgumentParser(description="MCP PDF Upload Server")
+    """Run the MCP PDF to Markdown conversion server."""
+    parser = argparse.ArgumentParser(description="MCP PDF to Markdown Conversion Server")
     parser.add_argument("--db-path", default="/app/db/example.db", help="Path to database (not used)")
     args = parser.parse_args()
-    
+
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", "8000"))
-    logger.info(f"Starting MCP PDF Upload server on {host}:{port}")
-    logger.info(f"Upload directory: {UPLOAD_DIR}")
-    logger.info(f"Processed files list: {PROCESSED_LIST}")
+    port = int(os.getenv("PORT", "8001"))
+
+    logger.info(f"Starting MCP PDF to Markdown Conversion server with db-path: {args.db_path}")
+    logger.info(f"HOST: {host}")
+    logger.info(f"PORT: {port}")
     logger.info("MCP endpoint will be available at the server URL + /mcp")
-    
-    uvicorn.run(app, host=host, port=port, log_level="info", access_log=True)
+
+    if host == "0.0.0.0" or os.getenv("RAILWAY_ENVIRONMENT"):
+        logger.info("🚀 PRODUCTION MODE: Using FastMCP's streamable_http_app directly")
+        try:
+            if app is None:
+                raise AttributeError("streamable_http_app() returned None")
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            app.mount("/output", StaticFiles(directory=OUTPUT_DIR), name="output")
+            logger.info(f"✅ SUCCESS: Got streamable_http_app from FastMCP!")
+            logger.info(f"Running Uvicorn on {host}:{port}")
+            uvicorn.run(app, host=host, port=port, log_level="info", access_log=True)
+        except Exception as e:
+            logger.error(f"❌ Could not get streamable_http_app: {e}")
+            mcp.run(transport="streamable-http")
+    else:
+        logger.info("🏠 LOCAL DEVELOPMENT: Using FastMCP default")
+        mcp.run(transport="streamable-http")
 
 if __name__ == "__main__":
     main()

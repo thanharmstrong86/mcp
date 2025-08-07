@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  mcp-convert-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - PUBLIC_HOST=localhost
+      - PYTHONPATH=/app/src/convert_pdf/src
+      - DOCKER_ENV=1
+    volumes:
+      - ./uploaded:/app/uploaded
+      - ./output:/app/output
+      - ./processed_files.json:/app/processed_files.json
+    command: ["python", "-m", "src.convert_mcp"]
